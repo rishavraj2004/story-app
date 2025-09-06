@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        #output {
+            white-space: pre-wrap;
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <h1>Story Generator</h1>
+        <input id="prompt" type="text" placeholder="Enter your story idea...">
+        <button id="generateBtn">Generate Story</button>
+        <div id="output">Your story will appear here...</div>
+    </div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const prompt = document.getElementById('prompt').value.trim();
+            const output = document.getElementById('output');
+
+            if (!prompt) {
+                output.textContent = "Please enter a prompt.";
+                return;
+            }
+
+            output.textContent = "⏳ Generating story...";
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/story", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+
+                if (data.story) {
+                    output.textContent = data.story;
+                } else if (data.error) {
+                    output.textContent = "Error: " + data.error;
+                } else {
+                    output.textContent = "Unknown error occurred.";
+                }
+
+            } catch (err) {
+                output.textContent = "Network error: " + err;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
