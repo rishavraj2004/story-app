@@ -76,34 +76,41 @@
             const output = document.getElementById('output');
 
             if (!prompt) {
-                output.textContent = "Please enter a prompt.";
+                output.textContent = "⚠️ Please enter a prompt.";
                 return;
             }
 
             output.textContent = "⏳ Generating story...";
 
             try {
-                const response = await fetch("http://127.0.0.1:5000/story", {
+                // Replace the URL with your Railway deployment URL
+                const response = await fetch("https://story-app-production-0a6e.up.railway.app/story", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ prompt })
                 });
+
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
 
                 const data = await response.json();
 
                 if (data.story) {
                     output.textContent = data.story;
                 } else if (data.error) {
-                    output.textContent = "Error: " + data.error;
+                    output.textContent = "❌ Error: " + data.error;
                 } else {
-                    output.textContent = "Unknown error occurred.";
+                    output.textContent = "❌ Unknown error occurred.";
                 }
 
             } catch (err) {
-                output.textContent = "Network error: " + err;
+                output.textContent = "⚠️ Network error: " + err.message;
             }
         });
     </script>
+
 
 </body>
 

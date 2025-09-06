@@ -20,24 +20,40 @@ client = OpenAI(
 app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)  # allow frontend JS to access backend
 
-# Helper function to enforce word limit
-def truncate_to_n_words(text: str, n: int = 100) -> str:
-    words = text.split()
-    if len(words) <= n:
-        return text.strip()
-    out = " ".join(words[:n]).rstrip()
-    if out and out[-1] not in ".!?":
-        out += "..."
-    return out
+
+# Helper to enforce paragraph + word limits
+def enforce_paragraph_constraints(text: str, paragraphs: int = 3, words_per_para: int = 100) -> str:
+    # Split by double newlines into paragraphs
+    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+    
+    # If too many, trim; if too few, pad with empty
+    if len(paras) > paragraphs:
+        paras = paras[:paragraphs]
+    while len(paras) < paragraphs:
+        paras.append("")
+
+    processed = []
+    for p in paras:
+        words = p.split()
+        if len(words) > words_per_para:
+            out = " ".join(words[:words_per_para]).rstrip()
+            if out and out[-1] not in ".!?":
+                out += "..."
+            processed.append(out)
+        else:
+            processed.append(" ".join(words))
+    return "\n\n".join(processed)
+
 
 @app.route("/")
 def serve_index():
     """Serve the frontend file"""
     return send_from_directory(".", "index.html")
 
+
 @app.route("/story", methods=["POST"])
 def story():
-    """Generate a short story based on user prompt (limited to 100 words)"""
+    """Generate a 3-paragraph story, 100 words per paragraph"""
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
 
@@ -46,30 +62,36 @@ def story():
 
     try:
         response = client.chat.completions.create(
-            model="mistral-small",  # change if you want another Mistral model
+            model="mistral-small",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a creative storyteller. Keep stories short (~100 words), fun, and self-contained."
+                    "content": (
+                        "You are a skilled storyteller. "
+                        "Always write stories in exactly 3 paragraphs. "
+                        "Each paragraph should be around 100 words, "
+                        "and the story must be complete within those 3 paragraphs."
+                    )
                 },
                 {
                     "role": "user",
-                    "content": f"Write a story in about 100 words about: {prompt}"
+                    "content": f"Write a complete 3-paragraph story (100 words each) about: {prompt}"
                 }
             ],
-            max_tokens=180,   # gives space for ~100 words
+            max_tokens=600,   # enough room for ~300 words
             temperature=0.9,
             stream=False
         )
 
         raw_story = response.choices[0].message.content
-        story_text = truncate_to_n_words(raw_story, 100)   # enforce hard cap
+        story_text = enforce_paragraph_constraints(raw_story, paragraphs=3, words_per_para=100)
         return jsonify({"story": story_text})
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
