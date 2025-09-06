@@ -1,3 +1,4 @@
+
 # app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -34,7 +35,7 @@ def story():
         response = client.chat.completions.create(
             model="mistral-small",  # <-- change here if you want another Mistral model
             messages=[
-                {"role": "system", "content": "You are a creative storyteller. Keep stories short and fun."},
+                {"role": "system", "content": "You are a creative storyteller. Keep stories short and funKeep stories short and fun. Limit the story to around 100 words.."},
                 {"role": "user", "content": f"Write a story about: {prompt}"}
             ],
             stream=False
