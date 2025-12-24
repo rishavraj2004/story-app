@@ -84,7 +84,7 @@
 
             try {
                 // Replace the URL with your Railway deployment URL
-                const response = await fetch("https://story-app-production-0a6e.up.railway.app/story", {
+                const response = await fetch("http://127.0.0.1:5000/story", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ prompt })
